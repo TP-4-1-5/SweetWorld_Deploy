@@ -1,0 +1,49 @@
+version: '3'
+
+networks:
+  my_network:
+    driver: bridge
+
+services:
+  db:
+    container_name: db
+    networks:
+      - my_network
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: David
+      POSTGRES_PASSWORD: david_sduk
+      POSTGRES_DB: tp_shop
+
+  backend:
+    container_name: backend
+    networks:
+      - my_network
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: always
+    command: sh -c  "python tp_shop/manage.py migrate && python tp_shop/manage.py runserver 0.0.0.0:30"
+    ports:
+      - "30:30"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=tp_shop
+      - DB_USER=David
+
+  frontend:
+    container_name: frontend
+    networks:
+      - my_network
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: always
+    command: npm start
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
